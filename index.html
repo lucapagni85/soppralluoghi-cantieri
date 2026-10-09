@@ -165,13 +165,14 @@ async function esporta(s) {
       out.push({ name: `${cart}/${d}_${String(i + 1).padStart(2, '0')}.jpg`, data: new Uint8Array(await ord[i].img.arrayBuffer()) });
     }
     const file = new File([zip(out)], cart + '.zip', { type: 'application/zip' });
-    // La condivisione richiede un tocco "fresco": per questo si fa con un secondo pulsante
-    st.innerHTML = `<b>ZIP pronto (${ord.length} foto)</b><div class="row" style="margin-top:8px"><button class="b" id="sh">Condividi</button><button class="b s" id="sv">Salva sul telefono</button></div><p id="msg" class="mut"></p>`;
+    // Chrome non consente di condividere i .zip: si salva lo ZIP in Download (affidabile) oppure si prova l'invio con estensione .txt
+    const alt = new File([file], cart + '.zip.txt', { type: 'text/plain' });
+    st.innerHTML = `<b>ZIP pronto (${ord.length} foto)</b><div class="row" style="margin-top:8px"><button class="b" id="sv">Salva ZIP sul telefono</button><button class="b s" id="sh">Condividi (prova)</button></div><p id="msg" class="mut">Dopo il salvataggio allega lo ZIP da WhatsApp o mail. "Condividi (prova)" invia il file come <i>nome.zip.txt</i>: sul PC togli ".txt".</p>`;
     $('#sh').onclick = async () => {
       try {
-        if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: cart });
-        else $('#msg').textContent = 'Condivisione non disponibile: usa "Salva sul telefono".';
-      } catch (e) { if (e.name !== 'AbortError') $('#msg').textContent = 'Condivisione non riuscita (' + e.name + '): usa "Salva sul telefono".'; }
+        if (navigator.canShare && navigator.canShare({ files: [alt] })) await navigator.share({ files: [alt], title: cart });
+        else $('#msg').textContent = 'Condivisione non disponibile: usa "Salva ZIP sul telefono".';
+      } catch (e) { if (e.name !== 'AbortError') $('#msg').textContent = 'Condivisione non riuscita (' + e.name + '): usa "Salva ZIP sul telefono".'; }
     };
     $('#sv').onclick = () => {
       const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; a.click();
