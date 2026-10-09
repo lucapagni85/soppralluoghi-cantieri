@@ -165,12 +165,18 @@ async function esporta(s) {
       out.push({ name: `${cart}/${d}_${String(i + 1).padStart(2, '0')}.jpg`, data: new Uint8Array(await ord[i].img.arrayBuffer()) });
     }
     const file = new File([zip(out)], cart + '.zip', { type: 'application/zip' });
-    st.textContent = 'ZIP pronto.';
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: cart }); } catch (e) { if (e.name !== 'AbortError') throw e; }
-    } else {
+    // La condivisione richiede un tocco "fresco": per questo si fa con un secondo pulsante
+    st.innerHTML = `<b>ZIP pronto (${ord.length} foto)</b><div class="row" style="margin-top:8px"><button class="b" id="sh">Condividi</button><button class="b s" id="sv">Salva sul telefono</button></div><p id="msg" class="mut"></p>`;
+    $('#sh').onclick = async () => {
+      try {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: cart });
+        else $('#msg').textContent = 'Condivisione non disponibile: usa "Salva sul telefono".';
+      } catch (e) { if (e.name !== 'AbortError') $('#msg').textContent = 'Condivisione non riuscita (' + e.name + '): usa "Salva sul telefono".'; }
+    };
+    $('#sv').onclick = () => {
       const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; a.click();
-    }
+      $('#msg').textContent = 'ZIP salvato nella cartella Download.';
+    };
   } catch (e) { st.textContent = 'Errore: ' + e.message; }
   btn.disabled = false;
 }
